@@ -444,14 +444,16 @@ func (p *parser) consumeCharacter(r rune) error {
 }
 
 // Parses a JSON value from a Reader. If it cannot read a valid value,
-// it returns an error. Returns nil error otherwise.
+// it returns a null value and a non-nil error.
+// Returns the parsed value and nil error otherwise.
 func Parse(r io.Reader) (*Value, error) {
 	pda := &parser{
-		isRunning: true,
-		isEOF:     false,
-		state:     sr,
-		modeTop:   -1,
-		valueTop:  -1,
+		isRunning:  true,
+		isEOF:      false,
+		state:      sr,
+		modeTop:    -1,
+		valueTop:   -1,
+		valueStack: [depth * 3]*Value{{}},
 	}
 	pda.pushMode(modeDone)
 
@@ -465,14 +467,14 @@ func Parse(r io.Reader) (*Value, error) {
 				pda.isEOF = true
 				pda.isRunning = false
 			} else {
-				return nil, err
+				return &Value{}, err
 			}
 		}
 		if r == unicode.ReplacementChar {
-			return nil, fmt.Errorf("%w: invalid UTF-8 character at %d", ErrParse, pda.pos)
+			return &Value{}, fmt.Errorf("%w: invalid UTF-8 character at %d", ErrParse, pda.pos)
 		}
 		if err := pda.consumeCharacter(r); err != nil {
-			return nil, err
+			return &Value{}, err
 		}
 
 		pda.pos += n
@@ -481,13 +483,15 @@ func Parse(r io.Reader) (*Value, error) {
 }
 
 // Parses a JSON value from a string. If it cannot read a valid value,
-// it returns an error. Returns nil error otherwise.
+// it returns a null value and a non-nil error.
+// Returns the parsed value and nil error otherwise.
 func ParseString(s string) (*Value, error) {
 	return Parse(strings.NewReader(s))
 }
 
 // Parses a JSON value from a byte slice. If it cannot read a valid value,
-// it returns an error. Returns nil error otherwise.
+// it returns a null value and a non-nil error.
+// Returns the parsed value and nil error otherwise.
 func ParseBytes(b []byte) (*Value, error) {
 	return ParseString(string(b))
 }

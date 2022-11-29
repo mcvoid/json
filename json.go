@@ -180,7 +180,9 @@ func (v *Value) String() string {
 	return "<unknown>"
 }
 
-// Fluent inteface for accessing array members. Returns nil instead of error.
+// Fluent interface for accessing array members.
+// If the value is not an array, or the index is out of range,
+// it instead returns null.
 func (v *Value) Index(i int) *Value {
 	if v.jsonType != Array {
 		return &Value{}
@@ -193,7 +195,9 @@ func (v *Value) Index(i int) *Value {
 	return v.arrayValue[i]
 }
 
-// Fluent inteface for accessing object members. Returns nil instead of error.
+// Fluent interface for accessing object members.
+// If the value is not an object, or the key doesn't exist,
+// it instead returns null.
 func (v *Value) Key(k string) *Value {
 	if v.jsonType != Object {
 		return &Value{}
