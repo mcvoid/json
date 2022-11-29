@@ -1,11 +1,28 @@
 # A Simple JSON Reader
 
-This library is for dynamically inspecting parsed JSON values rather than for data binding or serialization.
+A library for dynamically inspecting parsed JSON values rather than for data
+binding or serialization.
+
+Uses a table-driven parser based on Doug Crockford's `json-c` JSON Checker C
+library / command line utility. This should lead to a fairly fast parsing time,
+though that's not guaranteed and isn't even a design goal.
 
 [See the godoc for the full API](https://pkg.go.dev/github.com/mcvoid/json).
 
+## Installation
+
+```
+go get -u github.com/mcvoid/json
+```
+
+## Usage example
+
+Taken from `example_test.go`
+
 ```
 import "github.com/mcvoid/json"
+
+...
 
 func TestUsage(t *testing.T) {
 	// use one of the ParseXXX functions to get a JSON value from text.
@@ -91,32 +108,3 @@ func TestUsage(t *testing.T) {
 
 ```
 
-Uses a table-driven parser based on Doug Crockford's `json-c` JSON Checker C
-library / command line utility. This should lead to a fairly fast parsing time,
-though that's not guaranteed and isn't even a design goal.
-
-See `example_test.go` for usage examples.
-
-### License
-
-Copyright (c) 2022 Sean Wolcott
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-Based on `json-checker` by (c) 2016 Douglas Crockford, no license information specified.
