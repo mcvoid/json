@@ -1,6 +1,8 @@
-# A Simple JSON reader
+# A Simple JSON Reader
 
 This library is for dynamically inspecting parsed JSON values rather than for data binding or serialization.
+
+[See the godoc for the full API](https://pkg.go.dev/github.com/mcvoid/json).
 
 ```
 import "github.com/mcvoid/json"
@@ -50,6 +52,39 @@ func TestUsage(t *testing.T) {
 	if !b {
 		t.Error("true... isn't?")
 	}
+
+	// Key and value allow for a fluent interface to drill down to values.
+	beatles, _ := json.ParseString(`{
+		"name": "The Beatles",
+		"type": "band",
+		"members": [
+			{
+				"name": "John",
+				"role": "guitar"
+			},
+			{
+				"name": "Paul",
+				"role": "bass"
+			},
+			{
+				"name": "George",
+				"role": "guitar"
+			},
+			{
+				"name": "Ringo",
+				"role": "drums"
+			}
+		]
+	}`)
+
+	name, _ := beatles.Key("members").Index(2).Key("name").AsString()
+	fmt.Println(name) //  "George"
+
+	// Drilling down using the fluent interface over invalid values or missing keys
+	// will just propagate a null value.
+
+	null := beatles.Key("something").Index(-1).Key("")
+	fmt.Println(null) //  "null"
 
 	// And that's all there is to it. Enjoy!
 }
