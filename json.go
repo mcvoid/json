@@ -39,6 +39,7 @@ var typeStrings = [numTypes]string{
 	"<object>",
 }
 
+// Returns a string representation of a JSON Type.
 func (t Type) String() string {
 	if t < 0 || t >= numTypes {
 		return "<unknown>"
@@ -137,6 +138,7 @@ func (v *Value) AsObject() (map[string]*Value, error) {
 	return nil, fmt.Errorf("%w: value not a valid array %v", ErrType, v)
 }
 
+// Returns a string representation of the values. NOT valid JSON!
 func (v *Value) String() string {
 	switch v.jsonType {
 	case Null:
@@ -176,4 +178,32 @@ func (v *Value) String() string {
 		return str
 	}
 	return "<unknown>"
+}
+
+// Fluent inteface for accessing array members. Returns nil instead of error.
+func (v *Value) Index(i int) *Value {
+	if v.jsonType != Array {
+		return &Value{}
+	}
+
+	if i < 0 || i >= len(v.arrayValue) {
+		return &Value{}
+	}
+
+	return v.arrayValue[i]
+}
+
+// Fluent inteface for accessing object members. Returns nil instead of error.
+func (v *Value) Key(k string) *Value {
+	if v.jsonType != Object {
+		return &Value{}
+	}
+
+	for _, p := range v.objectValue {
+		if p.key == k {
+			return p.val
+		}
+	}
+
+	return &Value{}
 }

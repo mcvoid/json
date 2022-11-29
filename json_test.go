@@ -212,3 +212,81 @@ func TestString(t *testing.T) {
 		})
 	}
 }
+
+func TestIndex(t *testing.T) {
+	val, err := ParseString(`[[[true, false]]]`)
+
+	if err != nil {
+		t.Errorf("expected no error got %v", err)
+	}
+	for _, test := range []struct {
+		actual   *Value
+		expected *Value
+	}{
+		{
+			val.Index(0).Index(0).Index(0),
+			&Value{jsonType: Boolean, booleanValue: true},
+		},
+		{
+			val.Index(0).Index(0).Index(1),
+			&Value{jsonType: Boolean, booleanValue: false},
+		},
+		{
+			val.Index(0).Index(0).Index(2),
+			&Value{},
+		},
+		{
+			val.Index(0).Index(1).Index(2),
+			&Value{},
+		},
+		{
+			val.Index(-1).Index(1).Index(2),
+			&Value{},
+		},
+	} {
+		t.Run(fmt.Sprintf("%v", test.actual), func(t *testing.T) {
+			if !equals(test.actual, test.expected) {
+				t.Errorf("expected %v\ngot %v", test.expected, test.actual)
+			}
+		})
+	}
+}
+
+func TestKey(t *testing.T) {
+	val, err := ParseString(`{"a": {"b": {"c": true, "d":false}}}`)
+
+	if err != nil {
+		t.Errorf("expected no error got %v", err)
+	}
+	for _, test := range []struct {
+		actual   *Value
+		expected *Value
+	}{
+		{
+			val.Key("a").Key("b").Key("c"),
+			&Value{jsonType: Boolean, booleanValue: true},
+		},
+		{
+			val.Key("a").Key("b").Key("d"),
+			&Value{jsonType: Boolean, booleanValue: false},
+		},
+		{
+			val.Key("a").Key("b").Key("e"),
+			&Value{},
+		},
+		{
+			val.Key("a").Key("e").Key("d"),
+			&Value{},
+		},
+		{
+			val.Key("e").Key("b").Key("d"),
+			&Value{},
+		},
+	} {
+		t.Run(fmt.Sprintf("%v", test.actual), func(t *testing.T) {
+			if !equals(test.actual, test.expected) {
+				t.Errorf("expected %v\ngot %v", test.expected, test.actual)
+			}
+		})
+	}
+}
