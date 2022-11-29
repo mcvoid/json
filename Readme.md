@@ -91,8 +91,9 @@ func TestUsage(t *testing.T) {
 
 ```
 
-Uses a table-driven parser based on Doug Crockford's `json-c` JSON Checker C library / command line utility. This should
-lead to a fairly fast parsing time, though that's not guaranteed and isn't even a design goal.
+Uses a table-driven parser based on Doug Crockford's `json-c` JSON Checker C
+library / command line utility. This should lead to a fairly fast parsing time,
+though that's not guaranteed and isn't even a design goal.
 
 See `example_test.go` for usage examples.
 

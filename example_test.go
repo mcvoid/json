@@ -53,6 +53,17 @@ func TestUsage(t *testing.T) {
 		t.Error("true... isn't?")
 	}
 
+	// We also accept trailing commas in lists and objects, just so you're not
+	// scratching your head when you copy-paste a few lines and the parse fails.
+	goodInput, _ := json.ParseString(`{
+		"list": [
+			1,
+			2,
+			3,
+		],
+	}`)
+	fmt.Printf("%v", goodInput) // "{"list": [1, 2, 3]}"
+
 	// Key and value allow for a fluent interface to drill down to values.
 	beatles, _ := json.ParseString(`{
 		"name": "The Beatles",

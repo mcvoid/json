@@ -80,6 +80,7 @@ func TestJSONParseValid(t *testing.T) {
 		func() testdata { return testdata{input: `[]`} },
 		func() testdata { return testdata{input: `[null]`} },
 		func() testdata { return testdata{input: `[null, true, -10.55e-15, "-10\"\n\r\f\b\t\\\/\u01aF"]`} },
+		func() testdata { return testdata{input: `[null, true, -10.55e-15, "-10\"\n\r\f\b\t\\\/\u01aF",]`} },
 		func() testdata {
 			return testdata{input: `[
 				[],
@@ -100,6 +101,7 @@ func TestJSONParseValid(t *testing.T) {
 		},
 		func() testdata { return testdata{input: `{}`} },
 		func() testdata { return testdata{input: `{ "null": null }`} },
+		func() testdata { return testdata{input: `{ "null": null, }`} },
 		func() testdata {
 			return testdata{input: `{
 				"null": null,
@@ -524,6 +526,15 @@ func TestJSONParseValues(t *testing.T) {
 			}},
 		},
 		{
+			input: `[null, true, -10.55e-15, "-10\"\n\r\f\b\t\\\/\u01aF",]`,
+			expected: &Value{jsonType: Array, arrayValue: []*Value{
+				{jsonType: Null},
+				{jsonType: Boolean, booleanValue: true},
+				{jsonType: Number, numberValue: -10.55e-15},
+				{jsonType: String, stringValue: "-10\"\n\r\f\b\t\\/\u01aF"},
+			}},
+		},
+		{
 			input:    `[[]]`,
 			expected: &Value{jsonType: Array, arrayValue: []*Value{{jsonType: Array, arrayValue: []*Value{}}}},
 		},
@@ -543,6 +554,14 @@ func TestJSONParseValues(t *testing.T) {
 		{
 			input: `{
 				"null": null
+			}`,
+			expected: &Value{jsonType: Object, objectValue: []pair{
+				{"null", &Value{jsonType: Null}},
+			}},
+		},
+		{
+			input: `{
+				"null": null,
 			}`,
 			expected: &Value{jsonType: Object, objectValue: []pair{
 				{"null", &Value{jsonType: Null}},

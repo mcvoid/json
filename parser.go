@@ -79,6 +79,7 @@ const (
 	ob              // object
 	ke              // key
 	co              // colon
+	tc              // trailing comma
 	va              // value
 	ar              // array
 	st              // string
@@ -177,8 +178,9 @@ var stateTransitionTable = [numStates][numClasses]state{
 	/* start  sr*/ {sr, sr, so, __, sa, __, __, __, st, __, __, __, mi, __, ze, in, __, __, __, __, __, f1, __, n1, __, __, t1, __, __, __, __, __},
 	/* ok     ok*/ {ok, ok, __, eo, __, ea, __, ep, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, ok},
 	/* object ob*/ {ob, ob, __, ee, __, __, __, __, st, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __},
-	/* key    ke*/ {ke, ke, __, __, __, __, __, __, st, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __},
+	/* key    ke*/ {ke, ke, __, ee, __, __, __, __, st, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __},
 	/* colon  co*/ {co, co, __, __, __, __, ek, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __},
+	/* value  tc*/ {tc, tc, so, __, sa, aa, __, __, st, __, __, __, mi, __, ze, in, __, __, __, __, __, f1, __, n1, __, __, t1, __, __, __, __, __},
 	/* value  va*/ {va, va, so, __, sa, __, __, __, st, __, __, __, mi, __, ze, in, __, __, __, __, __, f1, __, n1, __, __, t1, __, __, __, __, __},
 	/* array  ar*/ {ar, ar, so, __, sa, aa, __, __, st, __, __, __, mi, __, ze, in, __, __, __, __, __, f1, __, n1, __, __, t1, __, __, __, __, __},
 	/* string st*/ {st, __, st, st, st, st, st, st, es, ec, st, st, st, st, st, st, st, st, st, st, st, st, st, st, st, st, st, st, st, st, st, __},
@@ -421,7 +423,7 @@ func (p *parser) consumeCharacter(r rune) error {
 		switch p.peekMode() {
 		case modeArray:
 			p.growArray()
-			p.state = va
+			p.state = tc
 		case modeObject:
 			p.growObject()
 			p.popMode(modeObject)
