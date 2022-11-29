@@ -21,9 +21,13 @@ It has been modified and expanded in the following ways:
 */
 
 const (
+	// Can only handle this many nested arrays and object.
+	// If you data is deeper than this, you have bigger problems
+	// than the parser failing.
 	depth = 1024
 )
 
+// The different input categories that provide the "columns" of the state transition table.
 type charClass int8
 
 // Character classes
@@ -64,6 +68,8 @@ const (
 	_________ = -1 // error
 )
 
+// States tell the parser the grammar rule that is trying to be matched,
+// and which kinds of characters are expected next.
 type state int8
 
 // States
@@ -111,6 +117,7 @@ const (
 	sa                   // Start array
 	so                   // Start object
 	ea                   // End array
+	aa                   // End empty array
 	eo                   // End object
 	ee                   // End empty object
 	ab                   // Accept bool
@@ -119,18 +126,27 @@ const (
 	as                   // Accept string
 )
 
-// Modes
+// Modes for the mode stack
+// makes this state machine a pushdown automaton
+// lets us parse recursive structures and do things
+// like brace matching
 type mode int8
 
 const (
+	// We're currently processing the contents of an array
 	modeArray mode = iota
+	// We're at the base value. If this is at the top of the stack,
+	// we've either just finished or just ended parsing.
 	modeDone
+	// We're processing a key string, signals when the string is done,
+	// we need to look for a ':' rather than just going back to OK
 	modeKey
+	// We're currently processing the contents of an object
 	modeObject
 )
 
-var ()
-
+// table for mapping an ascii byte to a character class
+// EOF is special, and is enreachable via a single byte
 var asciiClasses = [129]charClass{
 	_________, _________, _________, _________, _________, _________, _________, _________,
 	_________, charWhite, charWhite, _________, _________, charWhite, _________, _________,
@@ -154,6 +170,7 @@ var asciiClasses = [129]charClass{
 	charEof__,
 }
 
+// Maps a state + input to a new state. Some states (-1 and lower) are actions with special property rules
 var stateTransitionTable = [numStates][numClasses]state{
 	/*  	            white                                                    1-9                                                ABCDF    etc
 	.               sp  |   {   }   [   ]   :   ,   "   \   /   +   -   .   0   |   a   b   c   d   e   f   l   n   r   s   t   u   |   E   |  eof */
@@ -163,7 +180,7 @@ var stateTransitionTable = [numStates][numClasses]state{
 	/* key    ke*/ {ke, ke, __, __, __, __, __, __, st, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __},
 	/* colon  co*/ {co, co, __, __, __, __, ek, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __},
 	/* value  va*/ {va, va, so, __, sa, __, __, __, st, __, __, __, mi, __, ze, in, __, __, __, __, __, f1, __, n1, __, __, t1, __, __, __, __, __},
-	/* array  ar*/ {ar, ar, so, __, sa, ea, __, __, st, __, __, __, mi, __, ze, in, __, __, __, __, __, f1, __, n1, __, __, t1, __, __, __, __, __},
+	/* array  ar*/ {ar, ar, so, __, sa, aa, __, __, st, __, __, __, mi, __, ze, in, __, __, __, __, __, f1, __, n1, __, __, t1, __, __, __, __, __},
 	/* string st*/ {st, __, st, st, st, st, st, st, es, ec, st, st, st, st, st, st, st, st, st, st, st, st, st, st, st, st, st, st, st, st, st, __},
 	/* escape ec*/ {__, __, __, __, __, __, __, __, st, st, st, __, __, __, __, __, __, st, __, __, __, st, __, st, st, __, st, u1, __, __, __, __},
 	/* u1     u1*/ {__, __, __, __, __, __, __, __, __, __, __, __, __, __, u2, u2, u2, u2, u2, u2, u2, u2, __, __, __, __, __, __, u2, u2, __, __},
@@ -190,6 +207,7 @@ var stateTransitionTable = [numStates][numClasses]state{
 	/* null   n3*/ {__, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, ok, __, __, __, __, __, __, __, __, __},
 }
 
+// The pushdown automaton to handle the parsing.
 type parser struct {
 	isRunning  bool
 	isEOF      bool
@@ -202,21 +220,22 @@ type parser struct {
 	pos        int
 }
 
+// Puts a value onto the value stack. Correct parsing should end
+// with a single value left on the stack.
 func (p *parser) pushValue(v *Value) {
 	p.valueTop++
 	p.valueStack[p.valueTop] = v
 }
 
+// Pulls a value from the stack.
 func (p *parser) popValue() *Value {
 	v := p.valueStack[p.valueTop]
 	p.valueTop--
 	return v
 }
 
-func (p *parser) peekValue() *Value {
-	return p.valueStack[p.valueTop]
-}
-
+// Push a mode to the mode stack. Correct parsing should end
+// with modeDone being the only thing left on the stack.
 func (p *parser) pushMode(m mode) error {
 	p.modeTop++
 	if p.modeTop >= depth {
@@ -226,6 +245,7 @@ func (p *parser) pushMode(m mode) error {
 	return nil
 }
 
+// Pulls a mode from the stack.
 func (p *parser) popMode(m mode) error {
 	if p.modeStack[p.modeTop] != m {
 		return fmt.Errorf("%w: unmatched closing brace at %d", ErrParse, p.pos)
@@ -234,15 +254,21 @@ func (p *parser) popMode(m mode) error {
 	return nil
 }
 
+// Sees what the top of the stack is without removing it.
 func (p *parser) peekMode() mode {
 	return p.modeStack[p.modeTop]
 }
 
+// An impossible input under correct JSON grammar has been reached. Can happen for several reasons.
 func (p *parser) reject() error {
 	p.isRunning = false
 	return fmt.Errorf("%w: invalid character reached at byte %d", ErrParse, p.pos)
 }
 
+// We're at a point where,due to a closing brace, we are done with a literal value,
+// but it hasn't been added to the stack yet. So we clip it here and push the value.
+// This only happens for numbers (and integers), as the other values have explicit
+// terminating characters.
 func (p *parser) terminateLiterals(r rune) {
 	switch p.state {
 	case ze, in:
@@ -258,16 +284,19 @@ func (p *parser) terminateLiterals(r rune) {
 	}
 }
 
+// We're in array mode, and found a child object, so add it to the array
+// as we go on. This way at most one child object is on the stack for an
+// array at any time, and the rest are held in the array itself.
 func (p *parser) growArray() {
-	if p.peekValue().jsonType == Array {
-		return
-	}
 	val := p.popValue()
 	arr := p.popValue()
 	arr.arrayValue = append(arr.arrayValue, val)
 	p.pushValue(arr)
 }
 
+// We're in object mode, and found a child k/v pair, so add it to the object
+// as we go on. This way at most one child pair is on the stack for an
+// object at any time, and the rest are held in the object itself.
 func (p *parser) growObject() {
 	v, k := p.popValue(), p.popValue().stringValue
 	obj := p.popValue()
@@ -275,6 +304,7 @@ func (p *parser) growObject() {
 	p.pushValue(obj)
 }
 
+// Run one step of the PDA. Also handles the logic of the action states.
 func (p *parser) consumeCharacter(r rune) error {
 	var nextClass charClass
 	var nextState state
@@ -342,6 +372,10 @@ func (p *parser) consumeCharacter(r rune) error {
 		p.terminateLiterals(r)
 		p.growObject()
 		p.state = ok
+	case aa:
+		// End empty array
+		p.popMode(modeArray)
+		p.state = ok
 	case ea:
 		// End array
 
@@ -407,6 +441,8 @@ func (p *parser) consumeCharacter(r rune) error {
 	return nil
 }
 
+// Parses a JSON value from a Reader. If it cannot read a valid value,
+// it returns an error. Returns nil error otherwise.
 func Parse(r io.Reader) (*Value, error) {
 	pda := &parser{
 		isRunning: true,
@@ -442,10 +478,14 @@ func Parse(r io.Reader) (*Value, error) {
 	return pda.valueStack[0], nil
 }
 
+// Parses a JSON value from a string. If it cannot read a valid value,
+// it returns an error. Returns nil error otherwise.
 func ParseString(s string) (*Value, error) {
 	return Parse(strings.NewReader(s))
 }
 
+// Parses a JSON value from a byte slice. If it cannot read a valid value,
+// it returns an error. Returns nil error otherwise.
 func ParseBytes(b []byte) (*Value, error) {
 	return ParseString(string(b))
 }

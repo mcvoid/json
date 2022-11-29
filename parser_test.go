@@ -524,6 +524,19 @@ func TestJSONParseValues(t *testing.T) {
 			}},
 		},
 		{
+			input:    `[[]]`,
+			expected: &Value{jsonType: Array, arrayValue: []*Value{{jsonType: Array, arrayValue: []*Value{}}}},
+		},
+		{
+			input: `[[null, true, -10.55e-15, "-10\"\n\r\f\b\t\\\/\u01aF"]]`,
+			expected: &Value{jsonType: Array, arrayValue: []*Value{{jsonType: Array, arrayValue: []*Value{
+				{jsonType: Null},
+				{jsonType: Boolean, booleanValue: true},
+				{jsonType: Number, numberValue: -10.55e-15},
+				{jsonType: String, stringValue: "-10\"\n\r\f\b\t\\/\u01aF"},
+			}}}},
+		},
+		{
 			input:    `{}`,
 			expected: &Value{jsonType: Object, objectValue: []pair{}},
 		},
