@@ -1,6 +1,6 @@
 # A Simple JSON Reader
 
-![CI](https://github.com/github/docs/.github/workflows/main.yml/badge.svg)
+![CI](https://github.com/mcvoid/json/.github/workflows/checkBuild.yaml/badge.svg)
 
 A library for dynamically inspecting parsed JSON values rather than for data
 binding or serialization.
