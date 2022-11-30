@@ -64,6 +64,20 @@ func TestUsage(t *testing.T) {
 	}`)
 	fmt.Printf("%v", goodInput) // "{"list": [1, 2, 3]}"
 
+	// We also accept inline comments, both line comments (// ...) and block
+	// comments (/* ... */).
+	goodInput, _ = json.ParseString(`{
+		/*
+		  here's a comment.
+		*/
+		"list": [
+			1,
+			2,
+			3  // Here's another
+		],
+	}`)
+	fmt.Printf("%v", goodInput) // "{"list": [1, 2, 3]}"
+
 	// Key and value allow for a fluent interface to drill down to values.
 	beatles, _ := json.ParseString(`{
 		"name": "The Beatles",
