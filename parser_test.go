@@ -64,6 +64,58 @@ func TestJSONParseValid(t *testing.T) {
 	type testdata struct{ input string }
 	type testcase func() testdata
 	for _, test := range []testcase{
+		func() testdata {
+			return testdata{
+				input: `
+		// this is a comment.
+		null`,
+			}
+		},
+		func() testdata {
+			return testdata{
+				input: `null
+		// this is a comment.
+		`,
+			}
+		},
+		func() testdata {
+			return testdata{
+				input: `null
+		// this is a comment.`,
+			}
+		},
+		func() testdata {
+			return testdata{
+				input: `[
+					// this is a comment.
+					null
+				]
+		`,
+			}
+		},
+		func() testdata {
+			return testdata{
+				input: `
+		/* this is a comment. */
+		null`,
+			}
+		},
+		func() testdata {
+			return testdata{
+				input: `null
+		/* this is a comment. */
+		`,
+			}
+		},
+		func() testdata {
+			return testdata{
+				input: `[
+					/* this is a comment. */
+					null
+				]
+		`,
+			}
+		},
 		func() testdata { return testdata{input: `null`} },
 		func() testdata { return testdata{input: `true`} },
 		func() testdata { return testdata{input: `false`} },
